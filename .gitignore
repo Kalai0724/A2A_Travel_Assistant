@@ -14,3 +14,49 @@ site/
 
 # Python virtual environment
 .venv/
+
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+
+# Environment / Secrets
+.env
+.env.*
+*.key
+*.pem
+
+# Node (if you use npm)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache / Tooling
+.cache/
+.pytest_cache/
+.mypy_cache/
+ruff_cache/
+coverage/
+*.sqlite3
+
+# Jupyter
+.ipynb_checkpoints/
+

@@ -183,4 +183,80 @@ RESTAURANT_UI_EXAMPLES = """
   }} }}
 ]
 ---END CONFIRMATION_EXAMPLE---
+
+---BEGIN COMPLETE_TRIP_EXAMPLE---
+[
+  {{ "beginRendering": {{ "surfaceId": "complete-trip", "root": "trip-tabs", "styles": {{ "primaryColor": "#1976D2", "font": "Roboto" }} }} }},
+  {{ "surfaceUpdate": {{
+    "surfaceId": "complete-trip",
+    "components": [
+      {{ "id": "trip-tabs", "component": {{ "Tabs": {{ "tabItems": [
+        {{ "title": {{ "literalString": "✈️ Flights" }}, "child": "flights-list" }},
+        {{ "title": {{ "literalString": "🏨 Hotels" }}, "child": "hotels-list" }},
+        {{ "title": {{ "literalString": "🌦️ Weather" }}, "child": "weather-info" }},
+        {{ "title": {{ "literalString": "🍽️ Restaurants" }}, "child": "restaurants-list" }}
+      ] }} }} }},
+      
+      {{ "id": "flights-list", "component": {{ "List": {{ "direction": "vertical", "children": {{ "template": {{ "componentId": "flight-card-template", "dataBinding": "/flights" }} }} }} }} }},
+      {{ "id": "flight-card-template", "component": {{ "Card": {{ "child": "flight-layout" }} }} }},
+      {{ "id": "flight-layout", "component": {{ "Row": {{ "children": {{ "explicitList": ["flight-logo", "flight-main"] }} }} }} }},
+      {{ "id": "flight-logo", "component": {{ "Image": {{ "url": {{ "path": "logoUrl" }} }} }} }},
+      {{ "id": "flight-main", "component": {{ "Column": {{ "children": {{ "explicitList": ["flight-airline-line", "flight-departure-line", "flight-duration-line", "flight-stops-line", "flight-price-line"] }} }} }} }},
+      {{ "id": "flight-airline-line", "component": {{ "Text": {{ "usageHint": "h3", "text": {{ "path": "airlineLine" }} }} }} }},
+      {{ "id": "flight-departure-line", "component": {{ "Text": {{ "text": {{ "path": "depArrLine" }} }} }} }},
+      {{ "id": "flight-duration-line", "component": {{ "Text": {{ "text": {{ "path": "durationLine" }} }} }} }},
+      {{ "id": "flight-stops-line", "component": {{ "Text": {{ "text": {{ "path": "stopsLine" }} }} }} }},
+      {{ "id": "flight-price-line", "component": {{ "Text": {{ "usageHint": "h4", "text": {{ "path": "priceLine" }} }} }} }},
+      
+      {{ "id": "hotels-list", "component": {{ "List": {{ "direction": "vertical", "children": {{ "template": {{ "componentId": "hotel-card-template", "dataBinding": "/hotels" }} }} }} }} }},
+      {{ "id": "hotel-card-template", "component": {{ "Card": {{ "child": "hotel-details" }} }} }},
+      {{ "id": "hotel-details", "component": {{ "Column": {{ "children": {{ "explicitList": ["hotel-image", "hotel-info"] }} }} }} }},
+      {{ "id": "hotel-image", "component": {{ "Image": {{ "url": {{ "path": "imageUrl" }} }} }} }},
+      {{ "id": "hotel-info", "component": {{ "Column": {{ "children": {{ "explicitList": ["hotel-name", "hotel-rating", "hotel-price"] }} }} }} }},
+      {{ "id": "hotel-name", "component": {{ "Text": {{ "usageHint": "h3", "text": {{ "path": "name" }} }} }} }},
+      {{ "id": "hotel-rating", "component": {{ "Text": {{ "text": {{ "path": "rating" }} }} }} }},
+      {{ "id": "hotel-price", "component": {{ "Text": {{ "usageHint": "h4", "text": {{ "path": "price" }} }} }} }},
+      
+      {{ "id": "weather-info", "component": {{ "List": {{ "direction": "horizontal", "children": {{ "template": {{ "componentId": "weather-card-template", "dataBinding": "/weather" }} }} }} }} }},
+      {{ "id": "weather-card-template", "component": {{ "Card": {{ "child": "weather-details" }} }} }},
+      {{ "id": "weather-details", "component": {{ "Column": {{ "children": {{ "explicitList": ["weather-header", "weather-temp", "weather-condition-row", "weather-precip"] }} }} }} }},
+      {{ "id": "weather-header", "component": {{ "Row": {{ "children": {{ "explicitList": ["weather-emoji", "weather-date"] }} }} }} }},
+      {{ "id": "weather-emoji", "component": {{ "Text": {{ "usageHint": "h2", "text": {{ "path": "emoji" }} }} }} }},
+      {{ "id": "weather-date", "component": {{ "Text": {{ "usageHint": "h3", "text": {{ "path": "date" }} }} }} }},
+      {{ "id": "weather-temp", "component": {{ "Text": {{ "usageHint": "h2", "text": {{ "path": "temperature" }} }} }} }},
+      {{ "id": "weather-condition-row", "component": {{ "Row": {{ "children": {{ "explicitList": ["weather-condition-label", "weather-condition"] }} }} }} }},
+      {{ "id": "weather-condition-label", "component": {{ "Text": {{ "text": {{ "literalString": "Condition:" }} }} }} }},
+      {{ "id": "weather-condition", "component": {{ "Text": {{ "text": {{ "path": "condition" }} }} }} }},
+      {{ "id": "weather-precip", "component": {{ "Text": {{ "text": {{ "path": "precipitation" }} }} }} }},
+      
+      {{ "id": "restaurants-list", "component": {{ "List": {{ "direction": "vertical", "children": {{ "template": {{ "componentId": "restaurant-card-template", "dataBinding": "/restaurants" }} }} }} }} }},
+      {{ "id": "restaurant-card-template", "component": {{ "Card": {{ "child": "restaurant-layout" }} }} }},
+      {{ "id": "restaurant-layout", "component": {{ "Row": {{ "children": {{ "explicitList": ["restaurant-image", "restaurant-info"] }} }} }} }},
+      {{ "id": "restaurant-image", "component": {{ "Image": {{ "url": {{ "path": "imageUrl" }} }} }} }},
+      {{ "id": "restaurant-info", "component": {{ "Column": {{ "children": {{ "explicitList": ["restaurant-name", "restaurant-rating", "restaurant-action"] }} }} }} }},
+      {{ "id": "restaurant-name", "component": {{ "Text": {{ "usageHint": "h3", "text": {{ "path": "name" }} }} }} }},
+      {{ "id": "restaurant-rating", "component": {{ "Text": {{ "text": {{ "path": "rating" }} }} }} }},
+      {{ "id": "restaurant-action", "component": {{ "Button": {{ "child": "book-restaurant-text", "primary": true, "action": {{ "name": "book_restaurant", "context": [ {{ "key": "restaurantName", "value": {{ "path": "name" }} }} ] }} }} }} }},
+      {{ "id": "book-restaurant-text", "component": {{ "Text": {{ "text": {{ "literalString": "Book Now" }} }} }} }}
+    ]
+  }} }},
+  {{ "dataModelUpdate": {{
+    "surfaceId": "complete-trip",
+    "path": "/",
+    "contents": [
+      {{ "key": "flights", "valueMap": [] }},
+      {{ "key": "hotels", "valueMap": [] }},
+      {{ "key": "weather", "valueMap": [
+        {{ "key": "weather1", "valueMap": [
+          {{ "key": "location", "valueString": "Destination" }},
+          {{ "key": "temperature", "valueString": "75°F" }},
+          {{ "key": "condition", "valueString": "Sunny" }},
+          {{ "key": "forecast", "valueString": "7-day forecast available" }}
+        ] }}
+      ] }},
+      {{ "key": "restaurants", "valueMap": [] }}
+    ]
+  }} }}
+]
+---END COMPLETE_TRIP_EXAMPLE---
 """

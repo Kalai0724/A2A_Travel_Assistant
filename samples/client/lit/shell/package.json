@@ -23,7 +23,7 @@
       "service": true
     },
     "test": {
-      "command": "node --test --enable-source-maps --test-reporter spec dist/src/0.8/tests/**/*.test.js",
+      "command": "node --test --enable-source-maps --test-reporter spec dist/src/0.8/tests/*/.test.js",
       "dependencies": [
         "build"
       ]
@@ -42,12 +42,12 @@
         "../../../../renderers/lit:build:tsc"
       ],
       "files": [
-        "**/*.ts",
+        "*/.ts",
         "tsconfig.json"
       ],
       "output": [
         "dist/",
-        "!dist/**/*.min.js{,.map}"
+        "!dist/*/.min.js{,.map}"
       ],
       "clean": "if-file-deleted"
     }
@@ -83,4 +83,4 @@
     "@types/node": "^24.7.1",
     "lit": "^3.3.1"
   }
-}
+} 

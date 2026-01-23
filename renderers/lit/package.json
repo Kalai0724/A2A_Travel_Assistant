@@ -30,7 +30,7 @@
   },
   "wireit": {
     "copy-spec": {
-      "command": "mkdir -p src/0.8/schemas && cp ../../specification/v0_8/json/*.json src/0.8/schemas",
+      "command": "node -e \"const fs = require('fs'); const path = require('path'); fs.mkdirSync('src/0.8/schemas', { recursive: true }); const files = fs.readdirSync('../../specification/v0_8/json').filter(f => f.endsWith('.json')); files.forEach(f => fs.copyFileSync(path.join('../../specification/v0_8/json', f), path.join('src/0.8/schemas', f)));\"",
       "files": [
         "../../specification/v0_8/json/*.json"
       ],
@@ -96,6 +96,7 @@
     "@types/node": "^24.10.1",
     "google-artifactregistry-auth": "^3.5.0",
     "typescript": "^5.8.3",
+    "vite": "^7.3.1",
     "wireit": "^0.15.0-pre.2"
   },
   "dependencies": {

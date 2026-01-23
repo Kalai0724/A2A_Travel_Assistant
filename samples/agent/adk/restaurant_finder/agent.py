@@ -32,23 +32,27 @@ from prompt_builder import (
     get_text_prompt,
     get_ui_prompt,
 )
-from tools import get_restaurants
+from tools import get_restaurants, get_complete_trip
 
 logger = logging.getLogger(__name__)
 
 AGENT_INSTRUCTION = """
-    You are a helpful restaurant finding assistant. Your goal is to help users find and book restaurants using a rich UI.
+    You are a helpful travel and restaurant assistant. Your goal is to help users plan complete trips including flights, hotels, weather, and restaurants.
 
     To achieve this, you MUST follow this logic:
 
-    1.  **For finding restaurants:**
+    1.  **For complete trip planning (when user mentions flights, hotels, weather, AND restaurants together):**
+        a. You MUST call the `get_complete_trip` tool with the user's query.
+        b. This will retrieve flights, hotels, weather, and restaurants in one call and display them in a comprehensive UI.
+
+    2.  **For finding restaurants only:**
         a. You MUST call the `get_restaurants` tool. Extract the cuisine, location, and a specific number (`count`) of restaurants from the user's query (e.g., for "top 5 chinese places", count is 5).
         b. After receiving the data, you MUST follow the instructions precisely to generate the final a2ui UI JSON, using the appropriate UI example from the `prompt_builder.py` based on the number of restaurants.
 
-    2.  **For booking a table (when you receive a query like 'USER_WANTS_TO_BOOK...'):**
+    3.  **For booking a table (when you receive a query like 'USER_WANTS_TO_BOOK...'):**
         a. You MUST use the appropriate UI example from `prompt_builder.py` to generate the UI, populating the `dataModelUpdate.contents` with the details from the user's query.
 
-    3.  **For confirming a booking (when you receive a query like 'User submitted a booking...'):**
+    4.  **For confirming a booking (when you receive a query like 'User submitted a booking...'):**
         a. You MUST use the appropriate UI example from `prompt_builder.py` to generate the confirmation UI, populating the `dataModelUpdate.contents` with the final booking details.
 """
 
@@ -106,9 +110,9 @@ class RestaurantAgent:
         return LlmAgent(
             model=LiteLlm(model=LITELLM_MODEL),
             name="restaurant_agent",
-            description="An agent that finds restaurants and helps book tables.",
+            description="An agent that finds restaurants, books tables, and plans complete trips with flights, hotels, weather, and restaurants.",
             instruction=instruction,
-            tools=[get_restaurants],
+            tools=[get_restaurants, get_complete_trip],
         )
 
     async def stream(self, query, session_id) -> AsyncIterable[dict[str, Any]]:
