@@ -39,3 +39,22 @@
 [data-md-color-scheme="slate"] .light-mode-only {
   display: none !important;
 }
+
+/* --- Hotel Card Image Fix --- */
+section[style*="object-fit:contain"] {
+  height: auto !important;
+  min-height: unset !important;
+  max-height: none !important;
+  width: 100% !important;
+}
+section[style*="object-fit:contain"] img {
+  height: auto !important;
+  width: 100% !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  background: #fff !important;
+  display: block !important;
+  margin: 0 auto !important;
+  border-radius: 12px !important;
+  max-height: 420px !important;
+}

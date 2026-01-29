@@ -26,6 +26,7 @@ import {
 } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { theme as uiTheme } from "./theme/default-theme.js";
+import "./WeatherDashboard";
 import { A2UIClient } from "./client.js";
 import {
   SnackbarAction,
@@ -54,24 +55,53 @@ const configs: Record<string, AppConfig> = {
 
 @customElement("a2ui-shell")
 export class A2UILayoutEditor extends SignalWatcher(LitElement) {
+  // Weather dashboard state
+  @state() weatherData: any = null;
+  @state() weatherCity: string = "";
+
+  // --- Weather Integration ---
+  /**
+   * Map backend daily weather array to WeatherDashboard format
+   * @param backendData Array of daily weather objects from backend
+   * @param city City name
+   */
+  mapWeatherData(backendData: any[]) {
+    if (!Array.isArray(backendData) || backendData.length === 0) return null;
+    // Use first day as 'current' (approximation)
+    const today = backendData[0];
+    const current = {
+      temp: today.max_temp_c ?? '--',
+      feels_like: today.max_temp_c ?? '--',
+      humidity: today.humidity ?? '--',
+      wind: today.wind ?? '--',
+      condition: today.condition ?? '--',
+    };
+    // Daily cards
+    const daily = backendData.map((d) => ({
+      day: d.date,
+      temp_min: d.min_temp_c,
+      temp_max: d.max_temp_c,
+      precip: d.precipitation_mm,
+      rain_chance: d.rain_chance ?? '--',
+      condition: d.condition,
+      wind: d.wind ?? '--',
+      humidity: d.humidity ?? '--',
+      uv: d.uv ?? '--',
+      sunrise: d.sunrise ?? '--',
+      sunset: d.sunset ?? '--',
+    }));
+    // No hourly data from backend, so leave empty
+    return { current, hourly: [], daily };
+  }
   @provide({ context: UI.Context.themeContext })
-  accessor theme: v0_8.Types.Theme = uiTheme;
+  theme: v0_8.Types.Theme = uiTheme;
 
-  @state()
-  accessor #requesting = false;
-
-  @state()
-  accessor #error: string | null = null;
-
-  @state()
-  accessor #lastMessages: v0_8.Types.ServerToClientMessage[] = [];
-
-  @state()
-  accessor config: AppConfig = configs.restaurant;
-
-  @state()
-  accessor #loadingTextIndex = 0;
-  #loadingInterval: number | undefined;
+  @state() requesting = false;
+  @state() error: string | null = null;
+  @state() lastMessages: v0_8.Types.ServerToClientMessage[] = [];
+  @state() config: AppConfig = configs.restaurant;
+  @state() loadingTextIndex = 0;
+  loadingInterval: number | undefined;
 
   static styles = [
     unsafeCSS(v0_8.Styles.structuralStyles),
@@ -275,9 +305,9 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
   }> = [];
 
   #maybeRenderError() {
-    if (!this.#error) return nothing;
+    if (!this.error) return nothing;
 
-    return html`<div class="error">${this.#error}</div>`;
+    return html`<div class="error">${this.error}</div>`;
   }
 
   connectedCallback() {
@@ -304,12 +334,57 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
   }
 
   render() {
+    // Show weather dashboard if weatherData is set, else show normal UI
+    if (this.weatherData) {
+      return html`
+        ${this.#renderThemeToggle()}
+        <weather-dashboard
+          .weather=${this.weatherData}
+          .city=${this.weatherCity}
+          @search=${(e: CustomEvent) => this.#onWeatherSearch(e)}
+        ></weather-dashboard>
+      `;
+    }
     return [
       this.#renderThemeToggle(),
       this.#maybeRenderForm(),
       this.#maybeRenderData(),
       this.#maybeRenderError(),
     ];
+  }
+
+  // Handle search event from WeatherDashboard
+  async #onWeatherSearch(e: CustomEvent) {
+    const city = e.detail;
+    if (!city) return;
+    // Fetch weather data from backend agent
+    try {
+      // Update UI state
+      this.weatherCity = city;
+      this.weatherData = null;
+      // Example backend endpoint (adjust as needed)
+      const response = await fetch("/amadeus_weather_agent/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          params: { message: { parts: [{ text: city }] } },
+        }),
+      });
+      const result = await response.json();
+      const backendData =
+        result?.result?.artifact?.parts?.[0]?.data || [];
+      // Map and update
+      const mapped = this.mapWeatherData(backendData);
+      this.weatherData = mapped;
+    } catch (err) {
+      this.error = "Failed to fetch weather data.";
+    }
+  }
+
+  // Set weather data (used after fetch/mapping)
+  #setWeatherData(data: any, city: string) {
+    this.weatherData = data;
+    this.weatherCity = city;
   }
 
   #renderThemeToggle() {
@@ -334,8 +409,8 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
   }
 
   #maybeRenderForm() {
-    if (this.#requesting) return nothing;
-    if (this.#lastMessages.length > 0) return nothing;
+    if (this.requesting) return nothing;
+    if (this.lastMessages.length > 0) return nothing;
 
     return html` <form
       @submit=${async (evt: Event) => {
@@ -371,9 +446,9 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
           id="body"
           name="body"
           type="text"
-          ?disabled=${this.#requesting}
+          ?disabled=${this.requesting}
         />
-        <button type="submit" ?disabled=${this.#requesting}>
+        <button type="submit" ?disabled=${this.requesting}>
           <span class="g-icon filled-heavy">send</span>
         </button>
       </div>
@@ -385,19 +460,19 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
       Array.isArray(this.config.loadingText) &&
       this.config.loadingText.length > 1
     ) {
-      this.#loadingTextIndex = 0;
-      this.#loadingInterval = window.setInterval(() => {
-        this.#loadingTextIndex =
-          (this.#loadingTextIndex + 1) %
+      this.loadingTextIndex = 0;
+      this.loadingInterval = window.setInterval(() => {
+        this.loadingTextIndex =
+          (this.loadingTextIndex + 1) %
           (this.config.loadingText as string[]).length;
       }, 2000);
     }
   }
 
   #stopLoadingAnimation() {
-    if (this.#loadingInterval) {
-      clearInterval(this.#loadingInterval);
-      this.#loadingInterval = undefined;
+    if (this.loadingInterval) {
+      clearInterval(this.loadingInterval);
+      this.loadingInterval = undefined;
     }
   }
 
@@ -405,18 +480,18 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
     message: v0_8.Types.A2UIClientEventMessage
   ): Promise<v0_8.Types.ServerToClientMessage[]> {
     try {
-      this.#requesting = true;
+      this.requesting = true;
       this.#startLoadingAnimation();
       const response = this.#a2uiClient.send(message);
       await response;
-      this.#requesting = false;
+      this.requesting = false;
       this.#stopLoadingAnimation();
 
       return response;
     } catch (err) {
       this.snackbar(err as string, SnackType.ERROR);
     } finally {
-      this.#requesting = false;
+      this.requesting = false;
       this.#stopLoadingAnimation();
     }
 
@@ -424,11 +499,11 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
   }
 
   #maybeRenderData() {
-    if (this.#requesting) {
+    if (this.requesting) {
       let text = "Awaiting an answer...";
       if (this.config.loadingText) {
         if (Array.isArray(this.config.loadingText)) {
-          text = this.config.loadingText[this.#loadingTextIndex];
+          text = this.config.loadingText[this.loadingTextIndex];
         } else {
           text = this.config.loadingText;
         }
@@ -511,7 +586,7 @@ export class A2UILayoutEditor extends SignalWatcher(LitElement) {
 
     console.log(messages);
 
-    this.#lastMessages = messages;
+    this.lastMessages = messages;
     this.#processor.clearSurfaces();
     this.#processor.processMessages(messages);
   }

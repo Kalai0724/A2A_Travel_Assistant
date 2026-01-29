@@ -139,8 +139,8 @@ The best way to understand A2UI is to run the samples.
     npm install
     npm run build
 
-    # Install and run the shell client
-    cd ../../samples/client/lit/shell
+    # Install and run the shell clientcd ../../samples/client/lit/shell
+    
     npm install
     npm run dev
     ```

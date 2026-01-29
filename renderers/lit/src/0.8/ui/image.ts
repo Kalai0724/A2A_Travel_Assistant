@@ -53,8 +53,8 @@ export class Image extends Root {
       img {
         display: block;
         width: 100%;
-        height: 100%;
-        object-fit: var(--object-fit, fill);
+        height: auto;
+        object-fit: var(--object-fit, contain);
       }
     `,
   ];
@@ -109,7 +109,11 @@ export class Image extends Root {
       class=${classMap(classes)}
       style=${styleMap({
         ...(this.theme.additionalStyles?.Image ?? {}),
-        "--object-fit": this.fit ?? "fill",
+        // Remove any fixed height for full image display
+        height: 'auto',
+        minHeight: 'unset',
+        maxHeight: 'none',
+        "--object-fit": this.fit ?? "contain",
       })}
     >
       ${this.#renderImage()}

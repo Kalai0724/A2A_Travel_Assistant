@@ -24,6 +24,7 @@ from typing import Dict, Any
 from google.adk.tools.tool_context import ToolContext
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
 # Agent ports configuration
 AGENTS = {
@@ -39,7 +40,7 @@ AGENTS = {
 # "/static/..." and the actual image files should live under
 # Airline metadata used to enhance flight display.
 # We keep only names here and fetch logo URLs dynamically via SerpAPI.
-DEFAULT_AIRLINE_LOGO_URL = "https://images.unsplash.com/photo-1526498460520-4c246339dccb?w=400&q=80"
+DEFAULT_AIRLINE_LOGO_URL = "https://www.aircanada.com/content/dam/aircanada/portal/images/tiles/fly/onboard/tile50-our-fleet.jpg"
 
 AIRLINE_INFO: Dict[str, Dict[str, str]] = {
     "AA": {"name": "American Airlines"},
@@ -63,7 +64,12 @@ def get_airline_logo_url(airline: str, airline_name: str) -> str:
 
     Results are cached per airline code to avoid repeated SerpAPI calls.
     """
+
     code = (airline or "").upper()
+    # Hardcoded image for Virgin Atlantic
+    if code in ("VS",) or (airline_name or "").lower().startswith("virgin atlantic"):
+        return "https://images.ctfassets.net/rxqefefl3t5b/3cNPacvs5XOn36kvDhDkXf/a9a46bd03c2e5b9da9c5398ae14eb34b/A350_Air2Air2019_Retouched_DSC4963_EM4.jpg?fl=progressive&q=80"
+
     if code in _AIRLINE_LOGO_CACHE:
         return _AIRLINE_LOGO_CACHE[code]
 
@@ -184,7 +190,7 @@ def get_weather_emoji(condition: str) -> str:
 
 
 def format_weather_data(weather_raw: Any) -> list:
-    """Transform weather data into separate daily weather cards.
+    """Transform weather data into separate daily weather cards in vertical direction only.
     Each day gets its own card with condition, temp, and precipitation.
     """
     if not weather_raw:
@@ -215,12 +221,23 @@ def format_weather_data(weather_raw: Any) -> list:
                 condition = weather_item.get("condition", "Clear")
                 emoji = get_weather_emoji(condition)
                 
+                precip = weather_item.get('precipitation_mm', '0')
+                try:
+                    precip_val = float(precip)
+                except (TypeError, ValueError):
+                    precip_val = 0
+                if precip_val > 1.5:
+                    precip_str = f"🌦️ {precip}mm"
+                elif precip_val > 0:
+                    precip_str = f"💧 {precip}mm"
+                else:
+                    precip_str =" "
                 formatted.append({
                     "date": weather_item.get("date", "Unknown"),
                     "temperature": f"{weather_item.get('min_temp_c', 'N/A')}°C - {weather_item.get('max_temp_c', 'N/A')}°C",
                     "condition": condition,
                     "emoji": emoji,
-                    "precipitation": f"💧 {weather_item.get('precipitation_mm', '0')}mm"
+                    "precipitation": precip_str
                 })
     
     return formatted
@@ -242,7 +259,14 @@ def format_hotel_data(hotels_raw: Any) -> list:
             rate_total = hotel_item.get("rate_total")
             currency = hotel_item.get("currency") or "USD"
             price = hotel_item.get("price") or (f"{rate_total} {currency}" if rate_total else f"N/A {currency}")
-            image_url = hotel_item.get("imageUrl") or hotel_item.get("hotel_image_url") or "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80"
+                # Hardcoded image for London Marriott Hotel County Hall
+            if name.strip().lower() == "london marriott hotel county hall":
+                image_url = "https://cache.marriott.com/content/dam/marriott-digital/mc/emea/hws/l/lonch/en_us/photo/unlimited/assets/lonch-exterior-1425.jpg"
+            elif name.strip().lower() == "w london":
+                image_url= "https://www.momondo.in/rimg/himg/5a/bc/81/leonardo-329298-977713-911208.jpg?width=968&height=607&crop=true"
+            else:
+                image_url = "https://www.ahstatic.com/photos/1785_ho_00_p_1024x768.jpg"
+                #hotel_item.get("imageUrl") or hotel_item.get("el_image_urhotl") or
 
             formatted.append({
                 "name": name,
@@ -359,6 +383,9 @@ def format_flight_data(flights_raw: Any, base_url: str | None = None) -> list:
 
     return formatted
 
+def group_into_rows(items, row_size=3):
+    """Group a flat list into sublists of length row_size."""
+    return [items[i:i+row_size] for i in range(0, len(items), row_size)]
 
 def get_complete_trip(query: str, tool_context: ToolContext) -> str:
     """Call this tool to get a complete trip with flights, hotels, weather, and restaurants.
@@ -386,20 +413,26 @@ def get_complete_trip(query: str, tool_context: ToolContext) -> str:
         weather_raw = extract_data(weather_resp)
         hotels_raw = extract_data(hotel_resp)
         
-        # Format weather data and convert to valueMap for A2UI binding
+        # Format weather data
         weather_formatted = format_weather_data(weather_raw)
-        weather_valuemap = []
-        for idx, weather_item in enumerate(weather_formatted, 1):
-            weather_valuemap.append({
-                "key": f"weather{idx}",
+
+        # Group weather cards into rows of 3 for grid display, and wrap each row and card as valueMaps with keys
+        weather_rows = []
+        grouped = group_into_rows(weather_formatted, row_size=3)
+        for row_idx, row in enumerate(grouped, 1):
+            weather_rows.append({
+                "key": f"row{row_idx}",
                 "valueMap": [
-                    {"key": "date", "valueString": weather_item.get("date", "N/A")},
-                    {"key": "temperature", "valueString": weather_item.get("temperature", "N/A")},
-                    {"key": "condition", "valueString": weather_item.get("condition", "N/A")},
-                    {"key": "emoji", "valueString": weather_item.get("emoji", "🌤️")},
-                    {"key": "precipitation", "valueString": weather_item.get("precipitation", "N/A")}
+                    {
+                        "key": f"card{card_idx+1}",
+                        "valueMap": [
+                            {"key": k, "valueString": v} for k, v in card.items()
+                        ]
+                    }
+                    for card_idx, card in enumerate(row)
                 ]
             })
+        logger.debug(f"weatherRows structure: {json.dumps(weather_rows, indent=2)}")
         
         # Format hotels to valueMap for A2UI binding
         hotels_formatted = format_hotel_data(hotels_raw)
@@ -413,7 +446,7 @@ def get_complete_trip(query: str, tool_context: ToolContext) -> str:
                     {"key": "check_out", "valueString": hotel_item.get("check_out", "N/A")},
                     {"key": "price", "valueString": hotel_item.get("price", "N/A")},
                     {"key": "rating", "valueString": hotel_item.get("rating", "N/A")},
-                    {"key": "imageUrl", "valueString": hotel_item.get("imageUrl", "https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=800&q=80")}
+                    {"key": "imageUrl", "valueString": hotel_item.get("imageUrl", "https://www.ahstatic.com/photos/1785_ho_00_p_1024x768.jpg")}
                 ]
             })
 
@@ -424,12 +457,14 @@ def get_complete_trip(query: str, tool_context: ToolContext) -> str:
         trips_data = {
             "flights": flights_formatted,
             "hotels": hotels_valuemap,
-            "weather": weather_valuemap,
+            #"weather": weather_valuemap,
+            "weatherRows": weather_rows,
         }
-        
-        logger.info(f"  - Success: Complete trip data retrieved with {len(weather_valuemap)} weather days")
+
+        logger.info(f"  - Success: Complete trip data retrieved with {len(weather_rows)} weather rows")
         return json.dumps(trips_data)
     except Exception as e:
         logger.error(f"  - Error: {str(e)}")
         return json.dumps({"error": str(e)})
 print("SERPAPI_KEY present in tools.py:", bool(SERPAPI_KEY))
+

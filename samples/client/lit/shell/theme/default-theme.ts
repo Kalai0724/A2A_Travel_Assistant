@@ -160,6 +160,7 @@ const listItemLight = v0_8.Styles.merge(listItem, {});
 
 export const theme: v0_8.Types.Theme = {
   additionalStyles: {
+    // All card images: show full image, card grows to fit
     Button: {
       "--n-35": "var(--n-100)",
       "--n-10": "var(--n-0)",
@@ -205,6 +206,15 @@ export const theme: v0_8.Types.Theme = {
     },
     TextField: {
       "--p-0": "light-dark(var(--n-0), #1e293b)",
+    },
+    Image: {
+      // Ensure all logos/images render fully and at a consistent size
+      height: "120px",
+      width: "100%",
+      "object-fit": "contain",
+      "object-position": "center",
+      "background-color": "white",
+      padding: "8px",
     },
   },
   components: {
@@ -282,9 +292,7 @@ export const theme: v0_8.Types.Theme = {
     Image: {
       all: {
         "border-br-5": true,
-        "layout-el-cv": true,
-        "layout-w-100": true,
-        "layout-h-100": true,
+	"layout-w-100": true,
       },
       avatar: { "is-avatar": true },
       header: {},

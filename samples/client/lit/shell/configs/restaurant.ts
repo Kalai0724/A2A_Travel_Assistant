@@ -18,9 +18,9 @@ import { AppConfig } from "./types.js";
 
 export const config: AppConfig = {
   key: "restaurant",
-  title: "Restaurant Finder",
-  heroImage: "/hero.png",
-  heroImageDark: "/hero-dark.png",
+  title: "TripNavigator",
+  heroImage: "/sample/city_skyline.jpg",
+  heroImageDark: "/sample/city_skyline.jpg",
   background: `radial-gradient(
     at 0% 0%,
     light-dark(rgba(161, 196, 253, 0.3), rgba(6, 182, 212, 0.15)) 0px,
@@ -46,7 +46,7 @@ export const config: AppConfig = {
     light-dark(#f0f4f8, #0f172a) 0%,
     light-dark(#e2e8f0, #1e293b) 100%
   )`,
-  placeholder: "Top 5 Chinese restaurants in New York.",
+  placeholder: "San Francisco to London, Jan 28-31, 2026, economy flight, hotel and weather, 2 guests",
   loadingText: [
     "Finding the best spots for you...",
     "Checking reviews...",
